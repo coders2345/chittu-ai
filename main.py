@@ -1,34 +1,20 @@
-import google.auth
-from googleapiclient.discovery import build
-from youtube_player import play_video
-import speech_recognition as sr
+import os
 
-# Set up YouTube API credentials
-api_key = "AIzaSyBPqY04WEbQ4xwjkdcbvTjUuWx4ywiX64c")
+# Function to read the GPT-3 dataset from the file
+def read_gpt3_dataset(file_path):
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-# Set up YouTube API client
-service = build('youtube', 'v3', developerKey="AIzaSyBPqY04WEbQ4xwjkdcbvTjUuWx4ywiX64c")
+    data = []
+    with open(file_path, "r", encoding="utf-8") as file:
+        for line in file:
+            data.append(line.strip())
+    return data
 
-# Set up speech recognition
-r = sr.Recognizer()
-mic = sr.Microphone()
-
-# Listen for voice commands
-with mic as source:
-    speak("Say something!")
-    audio = r.listen(source)
-
-# Recognize voice command
+# Example usage
+file_path = "D:\\PycharmProjects\\chittu\\gpt-3-master\\175b_samples.jsonl"  # Replace with the correct file path
 try:
-    text = r.recognize_google(audio)
-    print("You said:", text)
-except sr.UnknownValueError:
-    print("Could not understand audio")
-except sr.RequestError as e:
-    print("Could not request results; {0}".format(e))
-
-# Search for video and play it
-request = service.search().list(q=text, part='id', type='video')
-response = request.execute()
-video_id = response['items'][0]['id']['videoId']
-play_video(video_id)
+    dataset = read_gpt3_dataset(file_path)
+    print("Dataset loaded successfully.")
+except FileNotFoundError as e:
+    print(e)

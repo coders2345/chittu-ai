@@ -4,10 +4,10 @@ import os
 import webbrowser
 import datetime
 import subprocess
+import pyautogui  # Import pyautogui for mouse control
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import torch
 import requests
-from bs4 import BeautifulSoup
 
 # Initialize speech recognizer and engine
 r = sr.Recognizer()
@@ -18,12 +18,16 @@ engine = pyttsx3.init()
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 model = GPT2LMHeadModel.from_pretrained("gpt2")
 
+# Function to wake up the program
+def wake_up_chittu():
+    print("Chittu is awake!")
+
 # Function to speak text
 def speak(text):
     engine.say(text)
     engine.runAndWait()
 
-# Function to interact with the GPT-2 model
+# Function to interact with  the GPT-2 model
 def interact_with_gpt2(user_input):
     inputs = tokenizer.encode(user_input, return_tensors="pt", add_special_tokens=True)
     attention_mask = inputs.ne(tokenizer.pad_token_id).float()
@@ -44,9 +48,6 @@ def collect_data_from_internet(query):
     url = f"https://www.example.com/search?q={query}"
     response = requests.get(url)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "html.parser")
-        # Extract relevant information from the web page
-        # ...
         speak("Here is the data I found.")
     else:
         speak("Sorry, I couldn't fetch the data at the moment.")
@@ -55,9 +56,9 @@ def collect_data_from_internet(query):
 def execute_command(command, chat_mode=False):
     if not chat_mode:
         if "what is your name" in command:
-            speak("My name is Chittu. I was developed by Basha.")
+            speak("My name is eagle. ")
         elif "tell about you" in command:
-            speak("I am Chittu, a voice assistant developed by Basha.")
+            speak("I am eagle, a voice assistant developed by Basha.")
         elif "open YouTube" in command:
             webbrowser.open("https://www.youtube.com")
         elif "open Google" in command:
@@ -121,6 +122,10 @@ def execute_command(command, chat_mode=False):
 
             ai_response = interact_with_gpt2(user_input)
             speak(f"AI says: {ai_response}")
+        elif "move mouse" in command:
+            # Add mouse control here
+            pyautogui.move(50, 50)  # Example: Move the mouse to the right and down
+            speak("Okay")
         else:
             speak("Sorry, I didn't understand that command.")
     else:
@@ -143,29 +148,30 @@ def execute_command(command, chat_mode=False):
         else:
             speak("Sorry, I didn't understand that command.")
 
-# Function to check for the activation phrase "basha"
+# Function to check for the activation phrase "hey wake up chittu"
 def check_activation_phrase():
     with sr.Microphone() as source:
         r.adjust_for_ambient_noise(source)
-        speak("Say 'basha' to activate me.")
-        audio = r.listen(source, phrase_time_limit=3)
+        print("Say 'hey wake up chittu' to activate me.")
+        audio = r.listen(source, phrase_time_limit=5)
 
     try:
         activation_phrase = r.recognize_google(audio).lower()
-        if "basha" in activation_phrase:
+        if "hey wake up chittu" in activation_phrase:
+            wake_up_chittu()
             speak("I'm listening...")
             return True
         else:
-            speak("Activation phrase not recognized. Please say 'basha' to activate.")
+            speak("Activation phrase not recognized. Please say 'hey wake up chittu' to activate.")
             return False
     except sr.UnknownValueError:
-        speak("Sorry, I couldn't understand. Please say 'basha' to activate.")
+        speak("Sorry, I couldn't understand. Please say 'hey wake up chittu' to activate.")
         return False
     except sr.RequestError:
         speak("Sorry, there was an issue with the speech recognition service.")
         return False
 
-# Call the activation function to listen for the activation phrase "basha"
+# Call the activation function to listen for the activation phrase
 while not check_activation_phrase():
     pass
 
@@ -190,6 +196,12 @@ while True:
             if "quit" in command:
                 speak("Goodbye!")
                 break
+
+            # Check if the user says "hey wake up chittu" to activate
+            if "hey wake up chittu" in command:
+                wake_up_chittu()
+                speak("I'm listening...")
+                continue
 
             # Check if the user says "basha" to toggle chat mode
             if "basha" in command:

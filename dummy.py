@@ -62,8 +62,8 @@ def execute_command(command):
                 audio = r.listen(source, phrase_time_limit=5)
                 # Recognize the speech and convert to text
                 query = r.recognize_google(audio)
-                url = query +('site:chatgpt.com')
-                speak("Performing Google search...")
+                url = 'https://www.google.com/search?q=' + query
+                speak(f"You said: {query} performing google search")
                 webbrowser.open(url)
 
         num_results = 1
@@ -92,18 +92,67 @@ def execute_command(command):
                 uri = results['tracks']['items'][0]['uri']
                 sp.start_playback(uris=[uri])
 # Define the main loop
+def check_activation_phrase():
+    with sr.Microphone() as source:
+        r.adjust_for_ambient_noise(source)
+        speak("Say 'basha' to activate me.")
+        audio = r.listen(source, phrase_time_limit=3)
+
+    try:
+        activation_phrase = r.recognize_google(audio).lower()
+        if "basha" in activation_phrase:
+            speak("I'm chittu developed by basha what do u want")
+            return True
+        else:
+            speak("Activation phrase not recognized. Please say 'basha' to activate.")
+            return False
+    except sr.UnknownValueError:
+        speak("Sorry, I couldn't understand. Please say 'basha' to activate.")
+        return False
+    except sr.RequestError:
+        speak("Sorry, there was an issue with the speech recognition service.")
+        return False
+
+# Call the activation function to listen for the activation phrase "basha"
+while not check_activation_phrase():
+    pass
+
+# Main loop for listening to user commands
+chat_mode = False
 while True:
     try:
         with sr.Microphone() as source:
             # Adjust the recognizer for ambient noise
             r.adjust_for_ambient_noise(source)
-            speak("what do u want to do ")
+            if not chat_mode:
+                speak("Ready for command")
+            else:
+                speak("Listening for chat input")
+
             # Listen for user input
             audio = r.listen(source, phrase_time_limit=5)
             # Recognize the speech and convert to text
-            command = r.recognize_google(audio)
-            speak(f"You said: {command}")
-            execute_command(command)
+            command = r.recognize_google(audio).lower()
+
+            # Check if the user says "quit" to end the loop
+            if "quit" in command:
+                speak("Goodbye!")
+                break
+
+            # Check if the user says "basha" to toggle chat mode
+            if "basha" in command:
+                chat_mode = not chat_mode
+                if chat_mode:
+                    speak("Chat mode activated. Please say 'basha' again to exit chat mode.")
+                else:
+                    speak("Chat mode deactivated. How can I help you?")
+
+            # Execute the appropriate command based on the mode
+            if chat_mode:
+                execute_command(command, chat_mode=True)
+            else:
+                execute_command(command)
+
     except sr.UnknownValueError:
         speak("Sorry, I didn't understand. Please try again.")
     except sr.RequestError:
